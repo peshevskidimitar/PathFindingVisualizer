@@ -4,18 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace PathfindingVisualizer
 {
+    [Serializable]
     public class Scene
     {
         public int Width { get; set; }
         public int Height { get; set; }
         public int Right { get; set; } = 15;
         public int Top { get; set; } = 250;
-        public int Margin { get; set; } = 3;
+        public int Margin { get; set; } = 1;
         public int CellSize { get; set; } = 15;
-        public Cell[, ] Matrix { get; set; }
+        public Cell[, ] Cells { get; set; }
+
+        public bool IsStartCellSelected { get; set; }
+        public bool IsEndCellSelected { get; set; }
 
         public Scene(int width, int height)
         {
@@ -26,25 +32,58 @@ namespace PathfindingVisualizer
 
         public void GenerateCells()
         {
-            int m = (Height - Top - 2 * Margin) / (CellSize + Margin);
-            int n = (Width - Right - 2 * Margin) / (CellSize + Margin);
+            int m = (Height - Top - Margin) / (CellSize + Margin);
+            int n = (Width - 20 - Margin) / (CellSize + Margin);
+            Right = (Width - n * (CellSize + Margin)) / 2;
             if (m > 0 && n > 0)
             {
-                Matrix = new Cell[m, n];
+                Cells = new Cell[m, n];
                 for (int i = 0; i < m; ++i)
                     for (int j = 0; j < n; ++j)
                     {
                         int x = Right + Margin + j * (CellSize + Margin);
                         int y = Top + Margin + i * (CellSize + Margin);
                         Cell cell = new Cell(new Point(x, y), new Size(CellSize, CellSize));
-                        Matrix[i, j] = cell;
+                        Cells[i, j] = cell;
                     }
 
-                Matrix[0, 0].IsStart = true;
-                Matrix[Matrix.GetLength(0) - 1, Matrix.GetLength(1) - 1].IsFinish = true;
+                Cells[0, 0].ChangeState(Cell.State.Start);
+                Cells[Cells.GetLength(0) - 1, Cells.GetLength(1) - 1].ChangeState(Cell.State.End);
             }
             else
-                Matrix = new Cell[0, 0];
+                Cells = new Cell[0, 0];
+        }
+
+        public bool IsThereStartFlag()
+        {
+            foreach (Cell cell in Cells)
+                if (cell.CurrentState == Cell.State.Start)
+                    return true;
+
+            return false;
+        }
+
+        public bool IsThereEndFlag()
+        {
+            foreach (Cell cell in Cells)
+                if (cell.CurrentState == Cell.State.End)
+                    return true;
+
+            return false;
+        }
+
+        public void ClearStartFlags()
+        {
+            foreach (Cell cell in Cells)
+                if (cell.CurrentState == Cell.State.Start)
+                    cell.UndoState();
+        }
+
+        public void ClearEndFlags()
+        {
+            foreach (Cell cell in Cells)
+                if (cell.CurrentState == Cell.State.End)
+                    cell.UndoState();
         }
 
         public void UpdateSize(int width, int height)
@@ -54,57 +93,120 @@ namespace PathfindingVisualizer
             UpdateCells();
         }
 
-        public void UpdateCells()
+        public void UpdateCellSize(int size)
         {
-            int m = (Height - Top - 2 * Margin) / (CellSize + Margin);
-            int n = (Width - Right - 2 * Margin) / (CellSize + Margin);
+            CellSize = size;
+            foreach (Cell cell in Cells)
+                cell.Size = new Size(size, size);
+            GenerateCells();
+        }
+
+        private void UpdateCells()
+        {
+            int m = (Height - Top - Margin) / (CellSize + Margin);
+            int n = (Width - 20 - Margin) / (CellSize + Margin);
+            Right = (Width - n * (CellSize + Margin)) / 2;
             if (m > 0 && n > 0)
             {
-                Cell[,] tmp = Matrix;
-                Matrix = new Cell[m, n];
+                Cell[,] tmp = Cells;
+                Cells = new Cell[m, n];
                 for (int i = 0; i < m; ++i)
                     for (int j = 0; j < n; ++j)
                         if (i < tmp.GetLength(0) && j < tmp.GetLength(1))
-                            Matrix[i, j] = tmp[i, j];
+                        {
+                            tmp[i, j].TopLeft = new Point(Right + Margin + j * (CellSize + Margin), tmp[i, j].TopLeft.Y);
+                            Cells[i, j] = tmp[i, j];
+                        }
                         else
                         {
                             int x = Right + Margin + j * (CellSize + Margin);
                             int y = Top + Margin + i * (CellSize + Margin);
                             Cell cell = new Cell(new Point(x, y), new Size(CellSize, CellSize));
-                            Matrix[i, j] = cell;
+                            Cells[i, j] = cell;
                         }
+
+                
+                if (!IsThereStartFlag())
+                    Cells[0, 0].ChangeState(Cell.State.Start);
+                if (!IsThereEndFlag())
+                    Cells[Cells.GetLength(0) - 1, Cells.GetLength(1) - 1].ChangeState(Cell.State.End);
             }
             else
-                Matrix = new Cell[0, 0];
+                Cells = new Cell[0, 0];
         }
 
         public void Draw(Graphics graphics)
         {
-            foreach (Cell cell in Matrix)
+            foreach (Cell cell in Cells)
                 cell.Draw(graphics);
         }
 
-        public void Click(Point location, bool IsLeftClick)
+        public void Click(Point location, bool IsLeftClick, Point point)
         {
-            foreach (Cell cell in Matrix)
+            foreach (Cell cell in Cells)
                 if (cell.IsClicked(location))
                 {
-                    if (IsLeftClick)
-                        cell.IsObstacle = true;
-                    else 
-                        cell.IsObstacle = false;
+                    
+                    if (IsStartCellSelected)
+                    {
+                        if (cell.CurrentState != Cell.State.End)
+                        {
+                            ClearStartFlags();
+                            cell.ChangeState(Cell.State.Start);
+                        }
+                    }
+                    else if (IsEndCellSelected)
+                    {
+                        if (cell.CurrentState != Cell.State.Start)
+                        {
+                            ClearEndFlags();
+                            cell.ChangeState(Cell.State.End);
+                        }
+                    }
+                    else if (IsStartCellClicked(point))
+                        IsStartCellSelected = true;
+                    else if (IsEndCellClicked(point))
+                        IsEndCellSelected = true;
+                    else if (cell.CurrentState == Cell.State.Normal || cell.CurrentState == Cell.State.Obstacle)
+                    {
+                        if (IsLeftClick)
+                            cell.ChangeState(Cell.State.Obstacle);
+                        else
+                            cell.ChangeState(Cell.State.Normal);
+                    }
                 }
         }
 
-        public void DFS(Form form)
+        public bool IsStartCellClicked(Point location)
         {
-            Graph graph = new Graph(Matrix);
-            graph.DFS(form);
+            foreach (Cell cell in Cells)
+                if (cell.IsClicked(location))
+                    if (cell.CurrentState == Cell.State.Start)
+                        return true;
+
+            return false;
         }
-        public void BFS(Form form)
+
+        public bool IsEndCellClicked(Point location)
         {
-            Graph graph = new Graph(Matrix);
-            graph.BFS(form);
+            foreach (Cell cell in Cells)
+                if (cell.IsClicked(location))
+                    if (cell.CurrentState == Cell.State.End)
+                        return true;
+
+            return false;
+        }
+
+        public void ClearVisitedAndPathFlags()
+        {
+            foreach (Cell cell in Cells)
+                cell.IsVisited = cell.IsPath = false;
+        }
+
+        public void BFS(Form form, ToolStripStatusLabel tssLblReport)
+        {
+            Graph graph = new Graph(Cells);
+            graph.BFS(form, tssLblReport);
         }
 
     }

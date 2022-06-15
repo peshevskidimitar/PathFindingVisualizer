@@ -8,6 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace PathfindingVisualizer
 {
@@ -15,6 +18,10 @@ namespace PathfindingVisualizer
     {
         private Scene Scene { get; set; }
         private bool IsMouseClick { get; set; }
+        private Point LastMouseDown { get; set; }
+
+        private string FileName { get; set; } = "untitled";
+        private bool IsModified { get; set; } = true;
 
         public Form()
         {
@@ -22,28 +29,33 @@ namespace PathfindingVisualizer
             DoubleBuffered = true;
 
             Scene = new Scene(ClientSize.Width, ClientSize.Height - toolStrip1.Height);
+            SetCaption();
         }
 
         private void Form_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             Scene.Draw(e.Graphics);
+            SetCaption();
         }
 
         private void Form_Resize(object sender, EventArgs e)
         {
+            IsModified = true;
             Scene.UpdateSize(ClientSize.Width, ClientSize.Height - toolStrip1.Height);
             Invalidate();
         }
 
         private void Form_MouseClick(object sender, MouseEventArgs e)
         {
-            Scene.Click(e.Location, e.Button == MouseButtons.Left);
+            IsModified = true;
+            Scene.Click(e.Location, e.Button == MouseButtons.Left, LastMouseDown);
             Invalidate();
         }
 
         private void Form_MouseDown(object sender, MouseEventArgs e)
         {
+            LastMouseDown = e.Location;
             IsMouseClick = true;
         }
 
@@ -51,7 +63,8 @@ namespace PathfindingVisualizer
         {
             if (IsMouseClick)
             {
-                Scene.Click(e.Location, e.Button == MouseButtons.Left);
+                IsModified = true;
+                Scene.Click(e.Location, e.Button == MouseButtons.Left, LastMouseDown);
                 Invalidate();
             }
         }
@@ -59,31 +72,152 @@ namespace PathfindingVisualizer
         private void Form_MouseUp(object sender, MouseEventArgs e)
         {
             IsMouseClick = false;
+            Scene.IsStartCellSelected = false;
+            Scene.IsEndCellSelected = false;
+        }
+
+        private void SetCaption()
+        {
+            Text = string.Format("Pathfinding Visualizer - {0}{1}", FileName, IsModified ? "*" : "");
+        }
+
+        private void AskToSave()
+        {
+            DialogResult dialogResult = MessageBox.Show("Do you want to save last changes?", "Save the current visualization", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (dialogResult == DialogResult.Yes)
+                SaveFile(false);
         }
 
         private void NewFile()
         {
-            throw new NotImplementedException();
+            if (IsModified)
+                AskToSave();
+
+            Scene = new Scene(ClientSize.Width, ClientSize.Height - toolStrip1.Height);
+            tssLblReport.Text = "";
+            nudCellSize.Value = Scene.CellSize;
+            FileName = "untitled";
+            SetCaption();
+            Invalidate();
         }
 
         private void SaveFile(bool IsSaveAs)
         {
-            throw new NotImplementedException();
+            if (FileName == "untitled" || IsSaveAs)
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "Pathfinding Visualizer (*.pathvis)|*.pathvis";
+                saveFileDialog.Title = "Save Pathfinding Visualization";
+                saveFileDialog.FileName = FileName;
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    FileName = saveFileDialog.FileName;
+            }
+
+            if (FileName != null)
+            {
+                using (FileStream fileStream = new FileStream(FileName, FileMode.Create))
+                {
+                    IFormatter formatter = new BinaryFormatter();
+                    formatter.Serialize(fileStream, Scene);
+                }
+
+                IsModified = false;
+                SetCaption();
+            }
         }
 
         private void OpenFile()
         {
-            throw new NotImplementedException();
+            if (IsModified)
+                AskToSave();
+
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Pathfinding Visualizer (*.pathvis)|*.pathvis";
+            openFileDialog.Title = "Open Pathfinding Visualization";
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string fileName = FileName;
+                FileName = openFileDialog.FileName;
+                try
+                {
+                    using (FileStream fileStream = new FileStream(FileName, FileMode.Open))
+                    {
+                        IFormatter formatter = new BinaryFormatter();
+                        Scene = (Scene)formatter.Deserialize(fileStream);
+                    }
+
+                    SetCaption();
+                    Invalidate();
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show("Could not read file: " + FileName);
+                    FileName = fileName;
+                }
+            }
         }
 
-        private void tssBtnDFS_Click(object sender, EventArgs e)
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Scene.DFS(this);
+            NewFile();
+        }
+
+        private void newToolStripButton_Click(object sender, EventArgs e)
+        {
+            NewFile();
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFile(false);
+        }
+
+        private void saveToolStripButton_Click(object sender, EventArgs e)
+        {
+            SaveFile(false);
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFile(true);
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFile();
+        }
+
+        private void openToolStripButton_Click(object sender, EventArgs e)
+        {
+            OpenFile();
         }
 
         private void tsBtnBFS_Click(object sender, EventArgs e)
         {
-            Scene.BFS(this);
+            IsModified = true;
+            Enabled = false;
+            Scene.BFS(this, tssLblReport);
+            Enabled = true;
+        }
+
+        private void tsBtnClear_Click(object sender, EventArgs e)
+        {
+            Scene.ClearVisitedAndPathFlags();
+            tssLblReport.Text = "";
+            Invalidate();
+        }
+
+        private void Form_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (IsModified)
+                AskToSave();
+        }
+
+        private void nudCellSize_ValueChanged(object sender, EventArgs e)
+        {
+            IsModified = true;
+            Scene.UpdateCellSize((int)nudCellSize.Value);
+            Invalidate();
         }
     }
 }

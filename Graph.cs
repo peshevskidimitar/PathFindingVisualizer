@@ -13,29 +13,24 @@ namespace PathfindingVisualizer
     {
         private int CountOfNodes { get; set; }
         private List<GraphNode> AdjacencyList { get; set; }
-        public GraphNode Start { get; set; }
+        public GraphNode StartNode { get; set; }
 
         public Graph(Cell[,] cells)
         {
             GenerateGraph(cells);
-            foreach (GraphNode node in AdjacencyList)
-                if (node.Cell.IsStart == true)
-                {
-                    Start = node;
-                    break;
-                }
+            FindStartNode();
         }
 
         private void CheckNeighborhood(Cell[, ] cells, int i, int j, int x, int y)
         {
             if ((0 <= x && x < cells.GetLength(0)) && (0 <= y && y < cells.GetLength(1)))
             {
-                if (!cells[x, y].IsObstacle)
+                if (cells[x, y].CurrentState != Cell.State.Obstacle)
                     AdjacencyList[cells.GetLength(1) * i + j].AddNeighbor(AdjacencyList[cells.GetLength(1) * x + y]);
             }
         }
 
-        public void GenerateGraph(Cell[,] cells)
+        private void GenerateGraph(Cell[,] cells)
         {
             CountOfNodes = cells.Length;
             AdjacencyList = new List<GraphNode>();
@@ -61,7 +56,20 @@ namespace PathfindingVisualizer
                 }
         }
 
-        public void Wait(int time)
+        private void FindStartNode()
+        {
+            foreach (GraphNode node in AdjacencyList)
+                if (node.Cell.CurrentState == Cell.State.Start)
+                {
+                    StartNode = node;
+
+                    return;
+                }
+
+            StartNode = null;
+        }
+
+        private void Wait(int time)
         {
             Thread thread = new Thread(delegate ()
             {
@@ -72,74 +80,29 @@ namespace PathfindingVisualizer
                 Application.DoEvents();
         }
 
-
-        public void DFS(Form form)
+        private void RetrievePath(GraphNode end, Dictionary<int, int> parentNodes, Form form, ToolStripStatusLabel tssLblReport)
         {
-            Dictionary<int, int> parentNodes = new Dictionary<int, int>();
-
-            bool[] visited = new bool[CountOfNodes];
-            for (int i = 0; i < CountOfNodes; ++i)
-                visited[i] = false;
-
-            GraphNode node = Start;
-
-            visited[node.Index] = true;
-            node.Cell.IsVisited = true;
-            form.Invalidate();
-            Wait(50);
-
-            Stack<int> stack = new Stack<int>();
-            stack.Push(node.Index);
-
-            while (stack.Count > 0)
+            List<int> path = new List<int>();
+            int index = end.Index;
+            while (index != StartNode.Index)
             {
-                GraphNode tmp = AdjacencyList[stack.Peek()];
-
-                GraphNode nextNode = null;
-                foreach (GraphNode neighbor in tmp.Neighbors)
-                {
-                    nextNode = neighbor;
-
-                    if (!visited[nextNode.Index])
-                        break;
-                }
-
-                if (nextNode != null && !visited[nextNode.Index])
-                {
-                    visited[nextNode.Index] = true;
-                    parentNodes[nextNode.Index] = tmp.Index;
-                    nextNode.Cell.IsVisited = true;
-                    form.Invalidate();
-                    Wait(50);
-                    if (nextNode.Cell.IsFinish)
-                    {
-                        List<int> shortestPath = new List<int>();
-                        int index = nextNode.Index;
-                        while (index != Start.Index)
-                        {
-                            shortestPath.Add(index);
-                            index = parentNodes[index];
-                        }
-
-                        // shortestPath.Reverse();
-
-                        foreach (int idx in shortestPath)
-                        {
-                            AdjacencyList[idx].Cell.IsPath = true;
-                            form.Invalidate();
-                            Wait(10);
-                        }
-
-                        return;
-                    }
-                    stack.Push(nextNode.Index);
-                }
-                else
-                    stack.Pop();
+                path.Add(index);
+                index = parentNodes[index];
             }
+
+            // path.Reverse();
+
+            foreach (int idx in path)
+            {
+                AdjacencyList[idx].Cell.IsPath = true;
+                form.Invalidate();
+                Wait(10);
+            }
+
+            tssLblReport.Text += string.Format(" Length of the shortest path: {0}", path.Count);
         }
 
-        public void BFS(Form form)
+        public void BFS(Form form, ToolStripStatusLabel tssLblReport)
         {
             Dictionary<int, int> parentNodes = new Dictionary<int, int>();
 
@@ -147,12 +110,15 @@ namespace PathfindingVisualizer
             for (int i = 0; i < CountOfNodes; ++i)
                 visited[i] = false;
 
-            GraphNode node = Start;
+            int countOfNodesExplored = 0;
 
+            GraphNode node = StartNode;
+            tssLblReport.Text = string.Format("Count of nodes explored: {0}", countOfNodesExplored);
             visited[node.Index] = true;
+            
             node.Cell.IsVisited = true;
             form.Invalidate();
-            Wait(10);
+            Wait(1);
 
             Queue<int> queue = new Queue<int>();
             queue.Enqueue(node.Index);
@@ -166,29 +132,15 @@ namespace PathfindingVisualizer
                         visited[neighbor.Index] = true;
                         parentNodes[neighbor.Index] = tmp.Index;
                         neighbor.Cell.IsVisited = true;
+                        tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
                         form.Invalidate();
-                        Wait(10);
+                        Wait(1);
 
                         queue.Enqueue(neighbor.Index);
 
-                        if (neighbor.Cell.IsFinish)
+                        if (neighbor.Cell.CurrentState == Cell.State.End)
                         {
-                            List<int> shortestPath = new List<int>();
-                            int index = neighbor.Index;
-                            while (index != Start.Index)
-                            {
-                                shortestPath.Add(index);
-                                index = parentNodes[index];
-                            }
-
-                            // shortestPath.Reverse();
-
-                            foreach (int idx in shortestPath)
-                            {
-                                AdjacencyList[idx].Cell.IsPath = true;
-                                form.Invalidate();
-                                Wait(10);
-                            }
+                            RetrievePath(neighbor, parentNodes, form, tssLblReport);
 
                             return;
                         }

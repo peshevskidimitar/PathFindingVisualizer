@@ -7,13 +7,21 @@ using System.Drawing;
 
 namespace PathfindingVisualizer
 {
+    [Serializable]
     public class Cell
     {
+        public enum State
+        {
+            Normal,
+            Obstacle,
+            Start,
+            End
+        }
+
         public Point TopLeft { get; set; }
         public Size Size { get; set; }
-        public bool IsObstacle { get; set; }
-        public bool IsStart { get; set; }
-        public bool IsFinish { get; set; }
+        public State PreviousState { get; set; }
+        public State CurrentState { get; set; }
         public bool IsVisited { get; set; }
         public bool IsPath { get; set; }
 
@@ -21,22 +29,40 @@ namespace PathfindingVisualizer
         {
             TopLeft = topLeft;
             Size = size;
+            PreviousState = State.Normal;
+            CurrentState = State.Normal;
+        }
+
+        public void ChangeState(State newState)
+        {
+            PreviousState = CurrentState;
+            CurrentState = newState;
+        }
+
+        public void UndoState()
+        {
+            CurrentState = PreviousState;
+            PreviousState = State.Normal;
         }
 
         private Color ChooseColor()
         {
-            if (IsStart)
+            if (CurrentState == State.Start)
                 return Color.Green;
-            else if (IsFinish)
+            else if (CurrentState == State.End)
                 return Color.Red;
-            else if (IsObstacle)
-                return Color.Black;
-            else if (IsPath)
+
+            if (IsPath)
                 return Color.Purple;
             else if (IsVisited)
                 return Color.LightGreen;
-            else
+
+            if (CurrentState == State.Normal)
                 return Color.Gray;
+            else if (CurrentState == State.Obstacle)
+                return Color.Black;
+
+            return Color.White;
         }
 
         public void Draw(Graphics graphics)
@@ -48,13 +74,8 @@ namespace PathfindingVisualizer
 
         public bool IsClicked(Point point)
         {
-            if (!IsStart && !IsFinish)
-            {
-                Rectangle rectangle = new Rectangle(TopLeft, Size);
-                return rectangle.Contains(point);
-            }
-
-            return false;
+            Rectangle rectangle = new Rectangle(TopLeft, Size);
+            return rectangle.Contains(point);
         }
     }
 }
