@@ -12,6 +12,10 @@ namespace PathfindingVisualizer
         public Cell Cell { get; set; }
         public List<GraphNode> Neighbors { get; set; }
 
+        // for AStar
+        public GraphNode Parent { get; set; }
+        public float PathCost { get; set; } = 1;
+
         public GraphNode(int index, Cell cell)
         {
             Index = index;

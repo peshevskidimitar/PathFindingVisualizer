@@ -41,9 +41,12 @@ namespace PathfindingVisualizer
 
         private void Form_Resize(object sender, EventArgs e)
         {
-            IsModified = true;
-            Scene.UpdateSize(ClientSize.Width, ClientSize.Height - toolStrip1.Height);
-            Invalidate();
+            if (Scene != null)
+            {
+                IsModified = true;
+                Scene.UpdateSize(ClientSize.Width, ClientSize.Height - toolStrip1.Height);
+                Invalidate();
+            }
         }
 
         private void Form_MouseClick(object sender, MouseEventArgs e)
@@ -218,6 +221,33 @@ namespace PathfindingVisualizer
             IsModified = true;
             Scene.UpdateCellSize((int)nudCellSize.Value);
             Invalidate();
+        }
+
+        private void runBtn_Click(object sender, EventArgs e)
+        {
+            IsModified = true;
+            Enabled = false;
+            if (cbAlgorithm.SelectedIndex == -1)
+            {
+                MessageBox.Show("Please select an algorithm", "Error",MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else if(cbAlgorithm.SelectedIndex == 0)
+            {
+                Scene.BFS(this, tssLblReport);
+            }
+            else if(cbAlgorithm.SelectedIndex == 1)
+            {
+                Scene.DFS(this, tssLblReport);
+            }
+            else if (cbAlgorithm.SelectedIndex == 2)
+            {
+                Scene.Greedy(this, tssLblReport);
+            }
+            else if (cbAlgorithm.SelectedIndex == 3)
+            {
+                Scene.AStar(this, tssLblReport);
+            }
+            Enabled = true;
         }
     }
 }

@@ -205,8 +205,48 @@ namespace PathfindingVisualizer
 
         public void BFS(Form form, ToolStripStatusLabel tssLblReport)
         {
+            ClearVisitedAndPathFlags();
             Graph graph = new Graph(Cells);
             graph.BFS(form, tssLblReport);
+        }
+
+        public void DFS(Form form, ToolStripStatusLabel tssLblReport)
+        {
+            ClearVisitedAndPathFlags();
+            Graph graph = new Graph(Cells);
+            graph.DFS(form, tssLblReport);
+        }
+
+        public void Greedy(Form form, ToolStripStatusLabel tssLblReport)
+        {
+            ClearVisitedAndPathFlags();
+            Graph graph = new Graph(Cells);
+            Cell endCell = null;
+            foreach (Cell cell in Cells) 
+            {
+                if (cell.CurrentState == Cell.State.End)
+                {
+                    endCell = cell;
+                    break;
+                }
+            }
+            graph.Geedy(form, tssLblReport, CellSize);
+        }
+
+        public void AStar(Form form, ToolStripStatusLabel tssLblReport)
+        {
+            ClearVisitedAndPathFlags();
+            Graph graph = new Graph(Cells);
+            Cell endCell = null;
+            foreach (Cell cell in Cells)
+            {
+                if (cell.CurrentState == Cell.State.End)
+                {
+                    endCell = cell;
+                    break;
+                }
+            }
+            graph.AStar(form, tssLblReport, CellSize);
         }
 
     }

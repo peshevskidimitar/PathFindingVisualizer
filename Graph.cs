@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Priority_Queue;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace PathfindingVisualizer
         private int CountOfNodes { get; set; }
         private List<GraphNode> AdjacencyList { get; set; }
         public GraphNode StartNode { get; set; }
+        public bool FoundSolution { get; set; } = false;
 
         public Graph(Cell[,] cells)
         {
@@ -104,6 +106,7 @@ namespace PathfindingVisualizer
 
         public void BFS(Form form, ToolStripStatusLabel tssLblReport)
         {
+            FoundSolution = false;
             Dictionary<int, int> parentNodes = new Dictionary<int, int>();
 
             bool[] visited = new bool[CountOfNodes];
@@ -141,11 +144,149 @@ namespace PathfindingVisualizer
                         if (neighbor.Cell.CurrentState == Cell.State.End)
                         {
                             RetrievePath(neighbor, parentNodes, form, tssLblReport);
-
+                            FoundSolution = true;
                             return;
                         }
                     }
             }
+        }
+
+        public void DFS(Form form, ToolStripStatusLabel tssLblReport)
+        {
+            FoundSolution = false;
+            Dictionary<int, int> parentNodes = new Dictionary<int, int>();
+
+            bool[] visited = new bool[CountOfNodes];
+            for (int i = 0; i < CountOfNodes; ++i)
+                visited[i] = false;
+
+            int countOfNodesExplored = 0;
+
+            DFS_Recursive(StartNode, null, visited, parentNodes, form, countOfNodesExplored, tssLblReport);
+
+        }
+
+        private void DFS_Recursive(GraphNode node, GraphNode parent, bool[] visited, Dictionary<int, int> parentNodes, Form form, int exploredNodes, ToolStripStatusLabel tssLblReport)
+        {
+            if (FoundSolution || visited[node.Index])
+            {
+                return;
+            }
+            visited[node.Index] = true;
+            if (parent != null)
+            {
+                parentNodes[node.Index] = parent.Index;
+            }
+            node.Cell.IsVisited = true;
+            tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++exploredNodes);
+            form.Invalidate();
+            Wait(1);
+            if (node.Cell.CurrentState == Cell.State.End)
+            {
+                RetrievePath(node, parentNodes, form, tssLblReport);
+                FoundSolution = true;
+                return;
+            }
+            node.Neighbors
+                .Where(x => !visited[x.Index]).ToList()
+                .ForEach(n => DFS_Recursive(n, node, visited, parentNodes, form, exploredNodes, tssLblReport));
+        }
+
+        public void Geedy(Form form, ToolStripStatusLabel tssLblReport, int CellSize)
+        {
+            FoundSolution = false;
+            Dictionary<int, int> parentNodes = new Dictionary<int, int>();
+
+            bool[] visited = new bool[CountOfNodes];
+            for (int i = 0; i < CountOfNodes; ++i)
+                visited[i] = false;
+
+            int countOfNodesExplored = 0;
+
+            var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
+            SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
+            queue.Enqueue(StartNode, 0);
+            var current = StartNode;
+            while (queue.Count != 0)
+            {
+                current = queue.Dequeue();
+                if (visited[current.Index]) continue;
+                if (current.Parent != null)
+                {
+                    parentNodes.Add(current.Index, current.Parent.Index);
+                }
+                visited[current.Index] = true;
+                current.Cell.IsVisited = true;
+                tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
+                form.Invalidate();
+                Wait(1);
+                if (current.Cell.CurrentState == Cell.State.End)
+                {
+                    RetrievePath(current, parentNodes, form, tssLblReport);
+                    FoundSolution = true;
+                    return;
+                }
+
+                foreach (var n in current.Neighbors)
+                {
+                    if (!visited[n.Index])
+                    {
+                        n.Parent = current;
+                        queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize)));
+                    }
+                }
+            }
+        }
+
+        public void AStar(Form form, ToolStripStatusLabel tssLblReport, int CellSize)
+        {
+            FoundSolution = false;
+            Dictionary<int, int> parentNodes = new Dictionary<int, int>();
+
+            bool[] visited = new bool[CountOfNodes];
+            for (int i = 0; i < CountOfNodes; ++i)
+                visited[i] = false;
+
+            int countOfNodesExplored = 0;
+
+            var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
+            SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
+            queue.Enqueue(StartNode, 0);
+            var current = StartNode;
+            while (queue.Count != 0)
+            {
+                current = queue.Dequeue();
+                if (visited[current.Index]) continue;
+                if (current.Parent != null)
+                {
+                    parentNodes.Add(current.Index, current.Parent.Index);
+                }
+                visited[current.Index] = true;
+                current.Cell.IsVisited = true;
+                tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
+                form.Invalidate();
+                Wait(1);
+                if (current.Cell.CurrentState == Cell.State.End)
+                {
+                    RetrievePath(current, parentNodes, form, tssLblReport);
+                    FoundSolution = true;
+                    return;
+                }
+
+                foreach (var n in current.Neighbors)
+                {
+                    if (!visited[n.Index])
+                    {
+                        n.Parent = current;
+                        n.PathCost = (float)(current.PathCost + 1.5);
+                        queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
+                    }
+                }
+            }
+        }
+        private double Heuristic(GraphNode startNode, GraphNode endNode, int CellSize)
+        {
+            return Math.Abs(startNode.Cell.TopLeft.X - endNode.Cell.TopLeft.X)/CellSize + Math.Abs(startNode.Cell.TopLeft.Y - endNode.Cell.TopLeft.Y)/CellSize;
         }
     }
 }
