@@ -15,7 +15,7 @@ namespace PathfindingVisualizer
             Normal,
             Obstacle,
             Start,
-            End
+            End,
         }
 
         public Point TopLeft { get; set; }
@@ -23,6 +23,7 @@ namespace PathfindingVisualizer
         public State PreviousState { get; set; }
         public State CurrentState { get; set; }
         public bool IsVisited { get; set; }
+        public bool IsHighlighted { get; set; }
         public bool IsPath { get; set; }
 
         public Cell(Point topLeft, Size size)
@@ -57,6 +58,8 @@ namespace PathfindingVisualizer
             else if (IsVisited)
                 return Color.LightGreen;
 
+            if (IsHighlighted)
+                return Color.Yellow;
             if (CurrentState == State.Normal)
                 return Color.Gray;
             else if (CurrentState == State.Obstacle)

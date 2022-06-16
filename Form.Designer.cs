@@ -65,6 +65,8 @@
             this.saveToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.tsBtnClear = new System.Windows.Forms.ToolStripButton();
+            this.tsbGenerateMaze = new System.Windows.Forms.ToolStripDropDownButton();
+            this.instantToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tssLblReport = new System.Windows.Forms.ToolStripStatusLabel();
             this.nudCellSize = new System.Windows.Forms.NumericUpDown();
@@ -72,6 +74,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.cbAlgorithm = new System.Windows.Forms.ComboBox();
             this.runBtn = new System.Windows.Forms.Button();
+            this.showAlgorithmToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -80,6 +83,7 @@
             // 
             // menuStrip1
             // 
+            this.menuStrip1.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
             this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
@@ -88,8 +92,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(9, 3, 0, 3);
-            this.menuStrip1.Size = new System.Drawing.Size(1476, 35);
+            this.menuStrip1.Size = new System.Drawing.Size(1476, 33);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -327,8 +330,9 @@
             this.openToolStripButton,
             this.saveToolStripButton,
             this.toolStripSeparator6,
-            this.tsBtnClear});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 35);
+            this.tsBtnClear,
+            this.tsbGenerateMaze});
+            this.toolStrip1.Location = new System.Drawing.Point(0, 33);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
             this.toolStrip1.Size = new System.Drawing.Size(1476, 34);
@@ -379,6 +383,25 @@
             this.tsBtnClear.Size = new System.Drawing.Size(55, 29);
             this.tsBtnClear.Text = "Clear";
             this.tsBtnClear.Click += new System.EventHandler(this.tsBtnClear_Click);
+            // 
+            // tsbGenerateMaze
+            // 
+            this.tsbGenerateMaze.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbGenerateMaze.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.instantToolStripMenuItem,
+            this.showAlgorithmToolStripMenuItem});
+            this.tsbGenerateMaze.Image = ((System.Drawing.Image)(resources.GetObject("tsbGenerateMaze.Image")));
+            this.tsbGenerateMaze.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbGenerateMaze.Name = "tsbGenerateMaze";
+            this.tsbGenerateMaze.Size = new System.Drawing.Size(220, 29);
+            this.tsbGenerateMaze.Text = "Generate Random Maze";
+            // 
+            // instantToolStripMenuItem
+            // 
+            this.instantToolStripMenuItem.Name = "instantToolStripMenuItem";
+            this.instantToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
+            this.instantToolStripMenuItem.Text = "Instant";
+            this.instantToolStripMenuItem.Click += new System.EventHandler(this.instantToolStripMenuItem_Click);
             // 
             // statusStrip1
             // 
@@ -464,6 +487,13 @@
             this.runBtn.UseVisualStyleBackColor = true;
             this.runBtn.Click += new System.EventHandler(this.runBtn_Click);
             // 
+            // showAlgorithmToolStripMenuItem
+            // 
+            this.showAlgorithmToolStripMenuItem.Name = "showAlgorithmToolStripMenuItem";
+            this.showAlgorithmToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
+            this.showAlgorithmToolStripMenuItem.Text = "Show algorithm";
+            this.showAlgorithmToolStripMenuItem.Click += new System.EventHandler(this.showAlgorithmToolStripMenuItem_Click);
+            // 
             // Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -546,6 +576,9 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ComboBox cbAlgorithm;
         private System.Windows.Forms.Button runBtn;
+        private System.Windows.Forms.ToolStripDropDownButton tsbGenerateMaze;
+        private System.Windows.Forms.ToolStripMenuItem instantToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem showAlgorithmToolStripMenuItem;
     }
 }
 

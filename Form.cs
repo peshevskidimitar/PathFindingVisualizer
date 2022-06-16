@@ -249,5 +249,14 @@ namespace PathfindingVisualizer
             }
             Enabled = true;
         }
+
+        private void instantToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Scene.GenerateMaze(this, false);
+        }
+        private void showAlgorithmToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Scene.GenerateMaze(this, true);
+        }
     }
 }

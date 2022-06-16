@@ -17,6 +17,8 @@ namespace PathfindingVisualizer
         public GraphNode StartNode { get; set; }
         public bool FoundSolution { get; set; } = false;
 
+        private readonly Random rand = new Random();
+
         public Graph(Cell[,] cells)
         {
             GenerateGraph(cells);
@@ -102,6 +104,74 @@ namespace PathfindingVisualizer
             }
 
             tssLblReport.Text += string.Format(" Length of the shortest path: {0}", path.Count);
+        }
+
+        public void GenerateRandomMaze(Form form, bool showAlgoritm)
+        {
+            // prim algorithm for generating minimal spanning tree https://en.wikipedia.org/wiki/Maze_generation_algorithm
+            AdjacencyList
+                .Where(x => x.Cell.CurrentState != Cell.State.Start && x.Cell.CurrentState != Cell.State.End).ToList()
+                .ForEach(x => x.Cell.ChangeState(Cell.State.Obstacle));
+
+            List<GraphNode> walls = new List<GraphNode>();
+            var startingNode = StartNode.Neighbors[rand.Next(0, StartNode.Neighbors.Count)];
+            startingNode.Cell.ChangeState(Cell.State.Normal);
+            startingNode.Neighbors
+                .Where(x => x.Cell.CurrentState != Cell.State.Start).ToList()
+                .ForEach(x => walls.Add(x));
+
+            while (walls.Count > 0)
+            {
+                var wall = walls[rand.Next(0,walls.Count)];
+                var openCells = wall.Neighbors.Where(x => x.Cell.CurrentState != Cell.State.Obstacle).ToList();
+                if(openCells.Count() == 1)
+                {
+                    wall.Cell.CurrentState = Cell.State.Normal;
+                    walls.Remove(wall);
+                    GraphNode nextCell = null;
+                    int xDiff = openCells[0].Cell.TopLeft.X - wall.Cell.TopLeft.X;
+                    int yDiff = openCells[0].Cell.TopLeft.Y - wall.Cell.TopLeft.Y;
+                    if (xDiff < 0)
+                    {
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.X > wall.Cell.TopLeft.X);
+                    }
+                    else if (xDiff > 0)
+                    {
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.X < wall.Cell.TopLeft.X);
+                    }
+                    else if (yDiff < 0)
+                    {
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.Y > wall.Cell.TopLeft.Y);
+                    }
+                    else
+                    {
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.Y < wall.Cell.TopLeft.Y);
+                    }
+                    if (nextCell != null)
+                    {
+                        nextCell.Cell.CurrentState = Cell.State.Normal;
+                        nextCell.Neighbors
+                            .Where(x => x.Cell.CurrentState == Cell.State.Obstacle).ToList()
+                            .ForEach(x => walls.Add(x));
+                        walls.Remove(nextCell);
+                    }
+                }
+                walls.Remove(wall);
+                if (showAlgoritm)
+                {
+                    wall.Cell.IsHighlighted = true;
+                    form.Invalidate();
+                    Wait(10);
+                    wall.Cell.IsHighlighted = false;
+                }
+            }
+            // this is to make sure there is a path from start to finish every time
+            var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
+            if (endNode.Neighbors.Where(x => x.Cell.CurrentState == Cell.State.Normal).Count() == 0)
+            {
+                endNode.Neighbors.ForEach(x => x.Cell.ChangeState(Cell.State.Normal));
+            }
+            form.Invalidate();
         }
 
         public void BFS(Form form, ToolStripStatusLabel tssLblReport)

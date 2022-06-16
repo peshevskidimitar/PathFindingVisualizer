@@ -249,5 +249,18 @@ namespace PathfindingVisualizer
             graph.AStar(form, tssLblReport, CellSize);
         }
 
+        public void GenerateMaze(Form form, bool showAlgorithm)
+        {
+            ClearVisitedAndPathFlags();
+            foreach (Cell cell in Cells) {
+                if (cell.CurrentState == Cell.State.Obstacle) 
+                {
+                    cell.ChangeState(Cell.State.Normal);
+                }
+            }
+            Graph graph = new Graph(Cells);
+            graph.GenerateRandomMaze(form, showAlgorithm);
+        }
+
     }
 }
