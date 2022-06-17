@@ -348,7 +348,7 @@ namespace PathfindingVisualizer
                     if (!visited[n.Index])
                     {
                         n.Parent = current;
-                        n.PathCost = (float)(current.PathCost + 1.5);
+                        n.PathCost = (float)(current.PathCost + 1);
                         queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
                     }
                 }
@@ -356,7 +356,7 @@ namespace PathfindingVisualizer
         }
         private double Heuristic(GraphNode startNode, GraphNode endNode, int CellSize)
         {
-            return Math.Abs(startNode.Cell.TopLeft.X - endNode.Cell.TopLeft.X)/CellSize + Math.Abs(startNode.Cell.TopLeft.Y - endNode.Cell.TopLeft.Y)/CellSize;
+            return Math.Abs(startNode.Cell.TopLeft.X - endNode.Cell.TopLeft.X)/(CellSize+1) + Math.Abs(startNode.Cell.TopLeft.Y - endNode.Cell.TopLeft.Y)/(CellSize+1);
         }
     }
 }
