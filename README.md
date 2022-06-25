@@ -145,21 +145,88 @@ public class Graph
 *Слика 5. „Приказ на опциите за серијализација (2)“*
 ## Алгоритми
 ### За пребарување
- - При секое поминување се означува полето со зелено. 
- ![image](https://user-images.githubusercontent.com/55097438/175505694-6927554f-3712-4cbf-81a6-ed2a2b033353.png)
- - При најден пат се означува патот со виолетово.
- ![image](https://user-images.githubusercontent.com/55097438/175505840-116e5c60-0446-44d4-85f2-f4094918eb34.png)
+ - Секое ново посетено поле зе означува со зелено.
+   <img width="913" alt="image" src="https://user-images.githubusercontent.com/55097438/175786305-dcd5c234-374e-433b-9810-7f684db65e25.png">
+   <br/>
+   *Слика 6. „Приказ на пребарување во лавиринтот“*
+
+
+ - Кога ќе биде најден пат од избраниот алгоритам, истиот е означува со виолетово.
+    <img width="916" alt="image" src="https://user-images.githubusercontent.com/55097438/175786317-2a1e3785-c478-4c40-903c-422dd051c047.png">
+    <br/>
+    *Слика 7. „Приказ на најден пат“*
+
  
  #### BFS
- Се имплементира со редица
+ Се посетуваат најпрвин сите директни соседи на секој јазол. Имплементирано со редица.
  #### DFS
- Се имплементира рекурзивно
+ Се посетуваат најпрвин јазлите што се најдлабоко во графот. Имплементирано рекурзивно.
  #### Greedy
- Се имплементира со приоритетна редица каде елементите се рангираат според менхетен растојание
+ Се посетуваат најпрвин јазлите што се најблиску до целта според менхетен растојание. Имплементирано со приоритетна редица.
  #### A*
- Се имплементира со приоритетна редица каде елементите се рангираат според збир на растојание и евристичка функција - менхетен растојание
+ Се посетуваат најпрвин јазлите со најмала вредност според формулата ```f(x) = t(x) + h(x)```
+ - ```t(x)``` е должината на патот помеѓу јазолот и почетокот 
+ - ```h(x)``` e менхетен растојание помеѓу јазолот и крајот
+ 
+ Имплементирано со приоритетна редица.
+ 
+ Чекори во A*:
+ - Инициализирај празна мапа за зачувување на родителите на пребараните јазли, низа која ќе чува за секој јазол дали е посетен и приоритетна редица (fringe)
+ - Додади го почетокот во приоритетната редица
+ - Се додека има јазли во редицата:
+    - Извади елемент од редицата, означи го како посетен и додади го родителот во мапата на родители
+    - Ако елементот е крај, прикажи го најдениот пат според мапата на родители и заврши со алгоритамот
+    - За секој сосед на елементот кој не е посетен, додади го во приоритетната редица со приоритет според горната формула
+
+Код на оваа имплементација:
+ ```C#
+ public void AStar(Form form, ToolStripStatusLabel tssLblReport, int CellSize)
+        {
+            FoundSolution = false;
+            Dictionary<int, int> parentNodes = new Dictionary<int, int>();
+
+            bool[] visited = new bool[CountOfNodes];
+            for (int i = 0; i < CountOfNodes; ++i)
+                visited[i] = false;
+
+            int countOfNodesExplored = 0;
+
+            var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
+            SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
+            queue.Enqueue(StartNode, 0);
+            var current = StartNode;
+            while (queue.Count != 0)
+            {
+                current = queue.Dequeue();
+                if (visited[current.Index]) continue;
+                if (current.Parent != null)
+                {
+                    parentNodes.Add(current.Index, current.Parent.Index);
+                }
+                visited[current.Index] = true;
+                current.Cell.IsVisited = true;
+                tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
+                form.Invalidate();
+                Wait(1);
+                if (current.Cell.CurrentState == Cell.State.End)
+                {
+                    RetrievePath(current, parentNodes, form, tssLblReport);
+                    FoundSolution = true;
+                    return;
+                }
+
+                foreach (var n in current.Neighbors)
+                {
+                    if (!visited[n.Index])
+                    {
+                        n.Parent = current;
+                        n.PathCost = (float)(current.PathCost + 1);
+                        queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
+                    }
+                }
+            }
+        }
+ ```
  
 ### За генерирање на лавиринт
-Се користи примов алгоритам за генерирање на MST. Има две опции:
-- Инстант - веднаш се генерира нов лавиринт
-- Прикажи алгоритам - се прикажува процесот на генерирање на лавиринт со овој алгоритам
+Се користи примов алгоритам за генерирање на ```minimal spanning tree```. [Имплементирано водејќи се според чекорите на овој линк](https://en.wikipedia.org/wiki/Maze_generation_algorithm).
