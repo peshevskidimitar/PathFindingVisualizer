@@ -100,6 +100,7 @@ namespace PathfindingVisualizer
             tssLblReport.Text = "";
             nudCellSize.Value = Scene.CellSize;
             FileName = "untitled";
+            IsModified = true;
             SetCaption();
             Invalidate();
         }
@@ -252,21 +253,25 @@ namespace PathfindingVisualizer
 
         private void instantToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            IsModified = true;
             Scene.GenerateMaze(this, false);
         }
         private void showAlgorithmToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            IsModified = true;
             Scene.GenerateMaze(this, true);
         }
 
         private void tsBtnEmpty_Click(object sender, EventArgs e)
         {
+            IsModified = true;
             Scene.GenerateCells();
             Invalidate();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            AskToSave();
             Application.Exit();
         }
     }
