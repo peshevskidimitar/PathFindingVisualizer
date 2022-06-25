@@ -230,7 +230,7 @@ namespace PathfindingVisualizer
                     break;
                 }
             }
-            graph.Geedy(form, tssLblReport, CellSize);
+            graph.Greedy(form, tssLblReport, CellSize);
         }
 
         public void AStar(Form form, ToolStripStatusLabel tssLblReport)

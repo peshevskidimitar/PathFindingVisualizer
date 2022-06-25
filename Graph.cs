@@ -272,7 +272,7 @@ namespace PathfindingVisualizer
                 .ForEach(n => DFS_Recursive(n, node, visited, parentNodes, form, exploredNodes, tssLblReport));
         }
 
-        public void Geedy(Form form, ToolStripStatusLabel tssLblReport, int CellSize)
+        public void Greedy(Form form, ToolStripStatusLabel tssLblReport, int CellSize)
         {
             FoundSolution = false;
             Dictionary<int, int> parentNodes = new Dictionary<int, int>();
