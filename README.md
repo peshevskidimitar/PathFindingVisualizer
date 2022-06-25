@@ -181,51 +181,47 @@ public class Graph
 Код на оваа имплементација:
  ```C#
  public void AStar(Form form, ToolStripStatusLabel tssLblReport, int CellSize)
+{
+    FoundSolution = false;
+    Dictionary<int, int> parentNodes = new Dictionary<int, int>();
+    bool[] visited = new bool[CountOfNodes];
+    for (int i = 0; i < CountOfNodes; ++i)
+        visited[i] = false;
+    int countOfNodesExplored = 0;
+    var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
+    SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
+    queue.Enqueue(StartNode, 0);
+    var current = StartNode;
+    while (queue.Count != 0)
+    {
+        current = queue.Dequeue();
+        if (visited[current.Index]) continue;
+        if (current.Parent != null)
         {
-            FoundSolution = false;
-            Dictionary<int, int> parentNodes = new Dictionary<int, int>();
-
-            bool[] visited = new bool[CountOfNodes];
-            for (int i = 0; i < CountOfNodes; ++i)
-                visited[i] = false;
-
-            int countOfNodesExplored = 0;
-
-            var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
-            SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
-            queue.Enqueue(StartNode, 0);
-            var current = StartNode;
-            while (queue.Count != 0)
+            parentNodes.Add(current.Index, current.Parent.Index);
+        }
+        visited[current.Index] = true;
+        current.Cell.IsVisited = true;
+        tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
+        form.Invalidate();
+        Wait(1);
+        if (current.Cell.CurrentState == Cell.State.End)
+        {
+            RetrievePath(current, parentNodes, form, tssLblReport);
+            FoundSolution = true;
+            return;
+        }
+        foreach (var n in current.Neighbors)
+        {
+            if (!visited[n.Index])
             {
-                current = queue.Dequeue();
-                if (visited[current.Index]) continue;
-                if (current.Parent != null)
-                {
-                    parentNodes.Add(current.Index, current.Parent.Index);
-                }
-                visited[current.Index] = true;
-                current.Cell.IsVisited = true;
-                tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
-                form.Invalidate();
-                Wait(1);
-                if (current.Cell.CurrentState == Cell.State.End)
-                {
-                    RetrievePath(current, parentNodes, form, tssLblReport);
-                    FoundSolution = true;
-                    return;
-                }
-
-                foreach (var n in current.Neighbors)
-                {
-                    if (!visited[n.Index])
-                    {
-                        n.Parent = current;
-                        n.PathCost = (float)(current.PathCost + 1);
-                        queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
-                    }
-                }
+                n.Parent = current;
+                n.PathCost = (float)(current.PathCost + 1);
+                queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
             }
         }
+    }
+}
  ```
  
 ### За генерирање на лавиринт
