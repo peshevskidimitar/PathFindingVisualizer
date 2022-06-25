@@ -119,7 +119,7 @@ namespace PathfindingVisualizer
                 .ForEach(x => x.Cell.ChangeState(Cell.State.Obstacle));
 
             List<GraphNode> walls = new List<GraphNode>();
-            var startingNode = StartNode.Neighbors[rand.Next(0, StartNode.Neighbors.Count)];
+            var startingNode = StartNode.Neighbors[rand.Next(0, 2)+1];
             startingNode.Cell.ChangeState(Cell.State.Normal);
             startingNode.Neighbors
                 .Where(x => x.Cell.CurrentState != Cell.State.Start).ToList()
@@ -128,6 +128,11 @@ namespace PathfindingVisualizer
             while (walls.Count > 0)
             {
                 var wall = walls[rand.Next(0,walls.Count)];
+                if(wall.Row == 0 || wall.Row == MaxRow-1 || wall.Column == 0 || wall.Column == MaxColumn-1)
+                {
+                    walls.Remove(wall);
+                    continue;
+                }
                 var openCells = wall.Neighbors.Where(x => x.Cell.CurrentState != Cell.State.Obstacle).ToList();
                 if(openCells.Count() == 1)
                 {
@@ -138,21 +143,21 @@ namespace PathfindingVisualizer
                     int yDiff = openCells[0].Row - wall.Row;
                     if (xDiff < 0)
                     {
-                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.X > wall.Cell.TopLeft.X);
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Column > wall.Column);
                     }
                     else if (xDiff > 0)
                     {
-                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.X < wall.Cell.TopLeft.X);
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Column < wall.Column);
                     }
                     else if (yDiff < 0)
                     {
-                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.Y > wall.Cell.TopLeft.Y);
+                        nextCell = wall.Neighbors.FirstOrDefault(x => x.Row > wall.Row);
                     }
                     else
                     {
                         nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.Y < wall.Cell.TopLeft.Y);
                     }
-                    if (nextCell != null)
+                    if (nextCell != null && nextCell.Row != 0 && nextCell.Row != MaxRow-1 && nextCell.Column != 0 && nextCell.Column != MaxColumn-1)
                     {
                         nextCell.Cell.CurrentState = Cell.State.Normal;
                         nextCell.Neighbors
@@ -174,7 +179,7 @@ namespace PathfindingVisualizer
             var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
             if (endNode.Neighbors.Where(x => x.Cell.CurrentState == Cell.State.Normal).Count() == 0)
             {
-                endNode.Neighbors.ForEach(x => x.Cell.ChangeState(Cell.State.Normal));
+                endNode.Neighbors[rand.Next(0, 1) == 1 ? 0 : 3].Cell.ChangeState(Cell.State.Normal);
             }
             form.Invalidate();
         }
