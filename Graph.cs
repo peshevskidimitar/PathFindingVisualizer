@@ -16,6 +16,8 @@ namespace PathfindingVisualizer
         private List<GraphNode> AdjacencyList { get; set; }
         public GraphNode StartNode { get; set; }
         public bool FoundSolution { get; set; } = false;
+        public int MaxRow { get; set; }
+        public int MaxColumn { get; set; }
 
         private readonly Random rand = new Random();
 
@@ -42,7 +44,7 @@ namespace PathfindingVisualizer
                 for (int j = 0; j < cells.GetLength(1); ++j)
                 {
                     Debug.WriteLine(cells.GetLength(1) * i + j);
-                    AdjacencyList.Add(new GraphNode(cells.GetLength(1) * i + j, cells[i, j]));
+                    AdjacencyList.Add(new GraphNode(i, j, cells.GetLength(1) * i + j, cells[i, j]));
                 }
 
             for (int i = 0; i < cells.GetLength(0); ++i)
@@ -58,6 +60,9 @@ namespace PathfindingVisualizer
                     x = i; y = j - 1;
                     CheckNeighborhood(cells, i, j, x, y);
                 }
+
+            MaxRow = cells.GetLength(0);
+            MaxColumn = cells.GetLength(1);
         }
 
         private void FindStartNode()
@@ -103,7 +108,7 @@ namespace PathfindingVisualizer
                 Wait(10);
             }
 
-            tssLblReport.Text += string.Format(" Length of the shortest path: {0}", path.Count);
+            tssLblReport.Text += string.Format(" Path length: {0}", path.Count);
         }
 
         public void GenerateRandomMaze(Form form, bool showAlgoritm)
@@ -129,8 +134,8 @@ namespace PathfindingVisualizer
                     wall.Cell.CurrentState = Cell.State.Normal;
                     walls.Remove(wall);
                     GraphNode nextCell = null;
-                    int xDiff = openCells[0].Cell.TopLeft.X - wall.Cell.TopLeft.X;
-                    int yDiff = openCells[0].Cell.TopLeft.Y - wall.Cell.TopLeft.Y;
+                    int xDiff = openCells[0].Column - wall.Column;
+                    int yDiff = openCells[0].Row - wall.Row;
                     if (xDiff < 0)
                     {
                         nextCell = wall.Neighbors.FirstOrDefault(x => x.Cell.TopLeft.X > wall.Cell.TopLeft.X);
@@ -356,7 +361,7 @@ namespace PathfindingVisualizer
         }
         private double Heuristic(GraphNode startNode, GraphNode endNode, int CellSize)
         {
-            return Math.Abs(startNode.Cell.TopLeft.X - endNode.Cell.TopLeft.X)/(CellSize+1) + Math.Abs(startNode.Cell.TopLeft.Y - endNode.Cell.TopLeft.Y)/(CellSize+1);
+            return Math.Abs(startNode.Row - endNode.Row) + Math.Abs(startNode.Column - endNode.Column);
         }
     }
 }

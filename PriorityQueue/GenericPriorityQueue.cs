@@ -347,7 +347,7 @@ namespace Priority_Queue
         private bool HasHigherPriority(TItem higher, TItem lower)
         {
             var cmp = _comparer(higher.Priority, lower.Priority);
-            return (cmp < 0 || (cmp == 0 && higher.InsertionIndex < lower.InsertionIndex));
+            return (cmp < 0 || (cmp == 0 && higher.InsertionIndex > lower.InsertionIndex));
         }
 
         /// <summary>

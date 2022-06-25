@@ -258,5 +258,16 @@ namespace PathfindingVisualizer
         {
             Scene.GenerateMaze(this, true);
         }
+
+        private void tsBtnEmpty_Click(object sender, EventArgs e)
+        {
+            Scene.GenerateCells();
+            Invalidate();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
     }
 }

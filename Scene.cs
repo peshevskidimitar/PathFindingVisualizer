@@ -47,8 +47,8 @@ namespace PathfindingVisualizer
                         Cells[i, j] = cell;
                     }
 
-                Cells[0, 0].ChangeState(Cell.State.Start);
-                Cells[Cells.GetLength(0) - 1, Cells.GetLength(1) - 1].ChangeState(Cell.State.End);
+                Cells[1, 1].ChangeState(Cell.State.Start);
+                Cells[Cells.GetLength(0) - 2, Cells.GetLength(1) - 2].ChangeState(Cell.State.End);
             }
             else
                 Cells = new Cell[0, 0];
@@ -127,9 +127,9 @@ namespace PathfindingVisualizer
 
                 
                 if (!IsThereStartFlag())
-                    Cells[0, 0].ChangeState(Cell.State.Start);
+                    Cells[1, 1].ChangeState(Cell.State.Start);
                 if (!IsThereEndFlag())
-                    Cells[Cells.GetLength(0) - 1, Cells.GetLength(1) - 1].ChangeState(Cell.State.End);
+                    Cells[Cells.GetLength(0) - 2, Cells.GetLength(1) - 2].ChangeState(Cell.State.End);
             }
             else
                 Cells = new Cell[0, 0];
