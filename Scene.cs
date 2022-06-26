@@ -15,7 +15,7 @@ namespace PathfindingVisualizer
         public int Width { get; set; }
         public int Height { get; set; }
         public int Right { get; set; } = 15;
-        public int Top { get; set; } = 250;
+        public int Top { get; set; } = 100;
         public int Margin { get; set; } = 1;
         public int CellSize { get; set; } = 15;
         public Cell[, ] Cells { get; set; }
