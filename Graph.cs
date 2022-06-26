@@ -277,12 +277,10 @@ namespace PathfindingVisualizer
             FoundSolution = false;
             Dictionary<int, int> parentNodes = new Dictionary<int, int>();
 
+            int countOfNodesExplored = 0;
             bool[] visited = new bool[CountOfNodes];
             for (int i = 0; i < CountOfNodes; ++i)
                 visited[i] = false;
-
-            int countOfNodesExplored = 0;
-
             var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
             SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
             queue.Enqueue(StartNode, 0);
@@ -290,13 +288,8 @@ namespace PathfindingVisualizer
             while (queue.Count != 0)
             {
                 current = queue.Dequeue();
-                if (visited[current.Index]) continue;
-                if (current.Parent != null)
-                {
-                    parentNodes.Add(current.Index, current.Parent.Index);
-                }
-                visited[current.Index] = true;
                 current.Cell.IsVisited = true;
+                visited[current.Index] = true;
                 tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
                 form.Invalidate();
                 Wait(1);
@@ -309,11 +302,12 @@ namespace PathfindingVisualizer
 
                 foreach (var n in current.Neighbors)
                 {
-                    if (!visited[n.Index])
+                    if (!queue.ToList().Contains(n) && !visited[n.Index])
                     {
-                        n.Parent = current;
-                        queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize)));
+                        parentNodes[n.Index] = current.Index;
+                        queue.Enqueue(n, (float)(Heuristic(n, endNode)));
                     }
+                    
                 }
             }
         }
@@ -322,11 +316,14 @@ namespace PathfindingVisualizer
         {
             FoundSolution = false;
             Dictionary<int, int> parentNodes = new Dictionary<int, int>();
+            Dictionary<int, int> shortestPathCost = new Dictionary<int, int>();
 
-            bool[] visited = new bool[CountOfNodes];
+
             for (int i = 0; i < CountOfNodes; ++i)
-                visited[i] = false;
-
+            {
+                shortestPathCost.Add(i, int.MaxValue);
+            }
+            shortestPathCost[StartNode.Index] = 0;
             int countOfNodesExplored = 0;
 
             var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
@@ -336,12 +333,6 @@ namespace PathfindingVisualizer
             while (queue.Count != 0)
             {
                 current = queue.Dequeue();
-                if (visited[current.Index]) continue;
-                if (current.Parent != null)
-                {
-                    parentNodes.Add(current.Index, current.Parent.Index);
-                }
-                visited[current.Index] = true;
                 current.Cell.IsVisited = true;
                 tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
                 form.Invalidate();
@@ -355,16 +346,23 @@ namespace PathfindingVisualizer
 
                 foreach (var n in current.Neighbors)
                 {
-                    if (!visited[n.Index])
-                    {
-                        n.Parent = current;
-                        n.PathCost = (float)(current.PathCost + 1);
-                        queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
+                    var score = shortestPathCost[current.Index] + 1;
+                    if (score < shortestPathCost[n.Index]) {
+                        parentNodes[n.Index] = current.Index;
+                        shortestPathCost[n.Index] = score;
+                        if (queue.ToList().Contains(n))
+                        {
+                            queue.UpdatePriority(n, (float)(Heuristic(n, endNode) + score));
+                        }
+                        else
+                        {
+                            queue.Enqueue(n, (float)(Heuristic(n, endNode) + score));
+                        }
                     }
                 }
             }
         }
-        private double Heuristic(GraphNode startNode, GraphNode endNode, int CellSize)
+        private double Heuristic(GraphNode startNode, GraphNode endNode)
         {
             return Math.Abs(startNode.Row - endNode.Row) + Math.Abs(startNode.Column - endNode.Column);
         }

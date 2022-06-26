@@ -171,7 +171,7 @@ public class Graph
  Имплементирано со приоритетна редица.
  
  Чекори во A*:
- - Иницијализирај празна мапа за зачувување на родителите на пребараните јазли, низа која ќе чува за секој јазол дали е посетен и приоритетна редица (fringe).
+ - Иницијализирај празна мапа за зачувување на родителите на пребараните јазли, мапа која ќе чува за секој јазол најкраткиот пат до почетокот и приоритетна редица (fringe).
  - Додади го почетокот во приоритетната редица.
  - Се додека има јазли во редицата:
     - Извади елемент од редицата, означи го како посетен и додади го родителот во мапата на родители.
@@ -184,9 +184,12 @@ public class Graph
 {
     FoundSolution = false;
     Dictionary<int, int> parentNodes = new Dictionary<int, int>();
-    bool[] visited = new bool[CountOfNodes];
+    Dictionary<int, int> shortestPathCost = new Dictionary<int, int>();
     for (int i = 0; i < CountOfNodes; ++i)
-        visited[i] = false;
+    {
+        shortestPathCost.Add(i, int.MaxValue);
+    }
+    shortestPathCost[StartNode.Index] = 0;
     int countOfNodesExplored = 0;
     var endNode = AdjacencyList.FirstOrDefault(x => x.Cell.CurrentState == Cell.State.End);
     SimplePriorityQueue<GraphNode, float> queue = new SimplePriorityQueue<GraphNode, float>();
@@ -195,12 +198,6 @@ public class Graph
     while (queue.Count != 0)
     {
         current = queue.Dequeue();
-        if (visited[current.Index]) continue;
-        if (current.Parent != null)
-        {
-            parentNodes.Add(current.Index, current.Parent.Index);
-        }
-        visited[current.Index] = true;
         current.Cell.IsVisited = true;
         tssLblReport.Text = string.Format("Count of nodes explored: {0}", ++countOfNodesExplored);
         form.Invalidate();
@@ -213,11 +210,18 @@ public class Graph
         }
         foreach (var n in current.Neighbors)
         {
-            if (!visited[n.Index])
-            {
-                n.Parent = current;
-                n.PathCost = (float)(current.PathCost + 1);
-                queue.Enqueue(n, (float)(Heuristic(n, endNode,CellSize) + n.PathCost));
+            var score = shortestPathCost[current.Index] + 1;
+            if (score < shortestPathCost[n.Index]) {
+                parentNodes[n.Index] = current.Index;
+                shortestPathCost[n.Index] = score;
+                if (queue.ToList().Contains(n))
+                {
+                    queue.UpdatePriority(n, (float)(Heuristic(n, endNode) + score));
+                }
+                else
+                {
+                    queue.Enqueue(n, (float)(Heuristic(n, endNode) + score));
+                }
             }
         }
     }
